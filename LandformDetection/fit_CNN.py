@@ -7,12 +7,20 @@ import matplotlib.pyplot as plt
 import numpy as np
 import h5py
 from sklearn.model_selection import train_test_split
+import cv2
 
 from process_image_data import load_image_data, save_test_images
 
 DIM_X, DIM_Y, COLOR_CHANNEL = 128, 128, 1
 
-df_data = load_image_data(resize=True, resize_dim=(DIM_X, DIM_Y), normalise=True)
+multiclass, number_classes = True, 6
+
+if multiclass:
+    OUTPUT_DIM = number_classes
+else:
+    OUTPUT_DIM = 2
+
+df_data = load_image_data(resize=True, resize_dim=(DIM_X, DIM_Y), normalise=True, multiclass=True)
 
 #save_test_images(df_data)
 
@@ -26,8 +34,6 @@ X_train = np.array([img.numpy().reshape(DIM_X, DIM_Y, COLOR_CHANNEL) for img in 
 
 y_test = np.array([img.numpy().reshape(DIM_X, DIM_Y, COLOR_CHANNEL) for img in y_test])
 y_train = np.array([img.numpy().reshape(DIM_X, DIM_Y, COLOR_CHANNEL) for img in y_train])
-
-
 
 #y_train = np.array([np.asarray(x).astype(np.float32) for x in y_train])
 #y_test = np.array([np.asarray(x).astype(np.float32) for x in y_test])
@@ -85,7 +91,7 @@ def build_unet_model():
     # 9 - upsample
     u9 = upsample_block(u8, f1, 64)
     # outputs
-    outputs = layers.Conv2D(2, 1, padding="same", activation = "softmax")(u9)
+    outputs = layers.Conv2D(OUTPUT_DIM, 1, padding="same", activation = "softmax")(u9)
     # unet model with Keras Functional API
     unet_model = tf.keras.Model(inputs, outputs, name="U-Net")
     
@@ -99,7 +105,8 @@ unet_model.compile(optimizer=tf.keras.optimizers.Adam(),
                   loss="sparse_categorical_crossentropy",
                   metrics="sparse_categorical_accuracy")
 
-mc = ModelCheckpoint('best_model_2.h5', monitor='val_accuracy', save_best_only=True, mode='max')
+metric = 'val_accuracy'
+mc = ModelCheckpoint('best_model_2.h5', monitor=metric, save_best_only=True, mode='max')
 
 EPOCHS = 20
 BATCH_SIZE = 24
@@ -112,7 +119,6 @@ model_history = unet_model.fit(X_train, y_train, epochs=EPOCHS, batch_size=BATCH
                                    callbacks=[mc])
 
 print('Model trained')
-
 
 
 

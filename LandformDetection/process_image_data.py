@@ -6,11 +6,14 @@ import cv2
 import time
 import tensorflow as tf
 
-def load_image_data(resize:bool, resize_dim:tuple, normalise:bool) -> pd.DataFrame:
+def load_image_data(resize:bool, resize_dim:tuple, normalise:bool, multiclass:bool) -> pd.DataFrame:
     start=time.time()
     
     folder_to_img = 'data/pits/'
-    folder_to_masks = 'data/pit_masks/'
+    if multiclass:
+        folder_to_masks = 'data/pit_masks_classes/'
+    else:
+        folder_to_masks = 'data/pit_masks/'
     
     img_data = {
                 'file_name':[],
@@ -42,8 +45,10 @@ def load_image_data(resize:bool, resize_dim:tuple, normalise:bool) -> pd.DataFra
         mask_vec = cv2.imread(folder_to_masks+mask_file, 0)
         if resize:
             mask_vec = cv2.resize(mask_vec, resize_dim, interpolation = cv2.INTER_LINEAR)
-        if normalise:
+        if normalise and not multiclass:
             mask_vec = tf.cast(tf.cast(mask_vec, tf.float32) / 255.0, tf.int8)
+        else:
+            mask_vec = tf.cast(mask_vec, tf.int8)
         
         mask_data['file_name'].append(file_name)
         mask_data['mask_vec'].append(mask_vec)
