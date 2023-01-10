@@ -17,11 +17,23 @@ class NumpyEncoder(json.JSONEncoder):
             return obj.tolist()
         return json.JSONEncoder.default(self, obj)
 
+MULTICLASS = True
 
 import_path = 'data/pits/'
-export_path = 'data/pit_masks/'
+if MULTICLASS:
+    export_path = 'data/pit_masks_classes/'
+else:    
+    export_path = 'data/pit_masks/'
 
 json_files= [file for file in os.listdir(import_path) if file.endswith('.json')]
+
+classes = {
+            1: ['Type-1', 'Type-1a', 'Type-1b'],
+            2: ['Type-2', 'Type-2a', 'Type-2b'],
+            3: ['Type-3'],
+            4: ['Type-4'],
+            5: ['Crater']
+            }
 
 masks = {}
 for file_name in json_files:
@@ -36,10 +48,18 @@ for file_name in json_files:
     
     try:
         polygon_pts = np.array(data['shapes'][0]['points'], dtype=np.int32)
+        label = data['shapes'][0]['label']
+        for key, value in classes.items():
+            if label in value:
+                int_label = key
+    
     except:
         print(file_name)
-        
-    cv2.fillPoly(mask, [polygon_pts], color=(255))
+    
+    if MULTICLASS:
+        cv2.fillPoly(mask, [polygon_pts], color=(int_label))
+    else:
+        cv2.fillPoly(mask, [polygon_pts], color=(255))
     
     masks[file_name[:-5]] = mask
     
@@ -47,5 +67,4 @@ for file_name in json_files:
 
     f.close()
     
-
 

@@ -13,14 +13,14 @@ from process_image_data import load_image_data, save_test_images
 
 DIM_X, DIM_Y, COLOR_CHANNEL = 128, 128, 1
 
-multiclass, number_classes = True, 6
+multiclass, number_classes = False, 6
 
 if multiclass:
     OUTPUT_DIM = number_classes
 else:
     OUTPUT_DIM = 2
 
-df_data = load_image_data(resize=True, resize_dim=(DIM_X, DIM_Y), normalise=True, multiclass=True)
+df_data = load_image_data(resize=True, resize_dim=(DIM_X, DIM_Y), normalise=True, multiclass=multiclass)
 
 #save_test_images(df_data)
 
@@ -105,8 +105,14 @@ unet_model.compile(optimizer=tf.keras.optimizers.Adam(),
                   loss="sparse_categorical_crossentropy",
                   metrics="sparse_categorical_accuracy")
 
-metric = 'val_accuracy'
-mc = ModelCheckpoint('best_model_2.h5', monitor=metric, save_best_only=True, mode='max')
+
+if multiclass:
+    model_file_name = 'best_model_multiclass.h5'
+else:
+    model_file_name = 'best_model_binary.h5'
+
+metric = 'val_loss'   
+mc = ModelCheckpoint(model_file_name, monitor=metric, save_best_only=True, mode='min')
 
 EPOCHS = 20
 BATCH_SIZE = 24
@@ -114,9 +120,9 @@ BATCH_SIZE = 24
 print('Model built and compiled...')
 
 
-model_history = unet_model.fit(X_train, y_train, epochs=EPOCHS, batch_size=BATCH_SIZE,
-                                   verbose=1, validation_data=(X_test, y_test),
-                                   callbacks=[mc])
+history = unet_model.fit(X_train, y_train, epochs=EPOCHS, batch_size=BATCH_SIZE,
+                         verbose=1, validation_data=(X_test, y_test),
+                         callbacks=[mc])
 
 print('Model trained')
 
