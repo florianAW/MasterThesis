@@ -1,0 +1,11 @@
+
+*.png
+*.json
+*.tiff
+Poster/*
+Expose/*
+Literatur/*
+*.pyc
+*.ini
+*.bak
+Arbeitsaufzeichnung.xlsx

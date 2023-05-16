@@ -10,6 +10,7 @@ import numpy as np
 import os
 import json
 import cv2
+import collections
 
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -36,6 +37,7 @@ classes = {
             }
 
 masks = {}
+labels = []
 for file_name in json_files:
     
     f = open(import_path+file_name)
@@ -49,9 +51,11 @@ for file_name in json_files:
     try:
         polygon_pts = np.array(data['shapes'][0]['points'], dtype=np.int32)
         label = data['shapes'][0]['label']
+        labels.append(label)
         for key, value in classes.items():
             if label in value:
                 int_label = key
+        #int_label = 2 if label == 'Crater' else 1 
     
     except:
         print(file_name)
@@ -67,4 +71,6 @@ for file_name in json_files:
 
     f.close()
     
+
+counter = collections.Counter(labels)
 
